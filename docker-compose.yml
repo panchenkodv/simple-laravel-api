@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+    app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: simple-laravel-api-app
+        container_name: simple_laravel_api_app
+        restart: unless-stopped
+        working_dir: /var/www
+        volumes:
+            - .:/var/www
+        networks:
+            - laravel
+
+    webserver:
+        image: nginx:alpine
+        container_name: simple_laravel_api_webserver
+        restart: unless-stopped
+        ports:
+            - "80:80"
+        volumes:
+            - .:/var/www
+            - ./docker/nginx/conf.d:/etc/nginx/conf.d
+        depends_on:
+            - app
+        networks:
+            - laravel
+
+    db:
+        image: mysql:5.7
+        container_name: simple_laravel_api_db
+        restart: unless-stopped
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: laravel
+            MYSQL_USER: laravel
+            MYSQL_PASSWORD: laravel
+        ports:
+            - "3306:3306"
+        volumes:
+            - dbdata:/var/lib/mysql
+        networks:
+            - laravel
+
+    redis:
+        image: redis:alpine
+        container_name: simple_laravel_api_redis
+        restart: unless-stopped
+        ports:
+            - "6379:6379"
+        networks:
+            - laravel
+
+networks:
+    laravel:
+        driver: bridge
+
+volumes:
+    dbdata:
+        driver: local
